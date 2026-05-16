@@ -1,0 +1,42 @@
+# --- Секреты и личные данные ---
+config.json
+settings.json
+state.json
+app_settings.json
+fetch_volunteers.py
+
+# --- Базы и резервные копии ---
+*.csv
+*.xlsx
+*.xls
+backup.*
+all_users.*
+BAZA*.xlsx
+queries.txt
+result.xlsx
+clean.xlsx
+
+# --- Сборка ---
+build/
+dist/
+*.spec
+*.exe
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+.eggs/
+*.egg-info/
+
+# --- IDE ---
+.vscode/
+.idea/
+.kiro/
+*.swp
+.DS_Store
+Thumbs.db
