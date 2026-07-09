@@ -10,3 +10,5 @@ release/
 # Секреты — никогда не должны уходить в репозиторий
 src/lib/secrets.ts
 
+# Кэш npm
+.npm-cache/

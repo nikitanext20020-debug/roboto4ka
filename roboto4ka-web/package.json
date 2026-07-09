@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "electron:dev": "concurrently -k -n VITE,ELECTRON -c blue,magenta \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "npm run build && electron-builder --win",
-    "electron:portable": "npm run build && electron-builder --win portable"
+    "electron:portable": "npm run build && electron-builder --win portable",
+    "electron:build:mac": "npm run build && electron-builder --mac"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

@@ -61,6 +61,48 @@ roboto4ka/
   page_media.py         Cloudinary
 ```
 
+## Новая версия (Electron + React)
+
+Обновленный вариант приложения находится в папке `roboto4ka-web`. Он реализован на React, Vite и Electron.
+
+### Системные требования
+- **Node.js** версии 18 или выше (рекомендуется LTS версия).
+
+### Установка зависимостей
+1. Перейдите в папку с новой версией:
+   ```bash
+   cd roboto4ka-web
+   ```
+2. Скопируйте файл секретов и настроек:
+   - **macOS / Linux**: `cp src/lib/secrets.example.ts src/lib/secrets.ts`
+   - **Windows (PowerShell)**: `Copy-Item src/lib/secrets.example.ts src/lib/secrets.ts`
+   - **Windows (CMD)**: `copy src\lib\secrets.example.ts src\lib\secrets.ts`
+3. Установите библиотеки:
+   ```bash
+   npm install
+   ```
+
+### Запуск в режиме разработки
+```bash
+npm run electron:dev
+```
+
+### Сборка приложения
+
+#### Сборка на Windows (получение .exe)
+1. Выполните сборку:
+   ```bash
+   npm run electron:build
+   ```
+   *Результат сборки (установщик и portable-версия `.exe`) появится в папке `roboto4ka-web/release/`.*
+
+#### Сборка на macOS (получение .dmg / .app)
+1. Выполните сборку:
+   ```bash
+   npm run electron:build:mac
+   ```
+   *Результат сборки (`.dmg` образ и распакованное приложение `.app`) появится в папке `roboto4ka-web/release/`.*
+
 ## Лицензия
 
 MIT  ·  Create by Nikita
