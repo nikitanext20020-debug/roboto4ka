@@ -1,8 +1,5 @@
-// Глобальное состояние приложения. Хранит данные страниц между переключениями.
-// Не делает persist в localStorage — только в памяти, чтобы не раздувать хранилище.
-
 import { createContext, useContext, useState, type ReactNode } from "react";
-import type { IndexedRecord, SearchHit, Strictness } from "./search";
+import type { IndexedRecord, SearchHit } from "./search";
 import type { TextGearsError } from "./textgears";
 import type { SpellMistake } from "./spell";
 
@@ -15,12 +12,10 @@ export type SearchState = {
   batch: string;
   hits: SearchHit[];
   notFound: string[];
-  strictness: Strictness;
 };
 
 const emptySearch: SearchState = {
   db: [], dbName: "", fio: "", phone: "", batch: "", hits: [], notFound: [],
-  strictness: "normal",
 };
 
 // ===== Text page =====

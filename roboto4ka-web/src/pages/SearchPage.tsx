@@ -20,7 +20,7 @@ import { findDuplicatesByFio, findDuplicatesByPhone, findDuplicatesFuzzy, type D
 
 export default function SearchPage({ onBack }: { onBack: () => void }) {
   const { search, setSearch } = useAppState();
-  const { db, dbName, fio, phone, batch, hits, notFound, strictness } = search;
+  const { db, dbName, fio, phone, batch, hits, notFound } = search;
 
   const setDb = (v: IndexedRecord[]) => setSearch((p) => ({ ...p, db: v }));
   const setDbName = (v: string) => setSearch((p) => ({ ...p, dbName: v }));
@@ -29,7 +29,6 @@ export default function SearchPage({ onBack }: { onBack: () => void }) {
   const setBatch = (v: string) => setSearch((p) => ({ ...p, batch: v }));
   const setHits = (v: SearchHit[]) => setSearch((p) => ({ ...p, hits: v }));
   const setNotFound = (v: string[]) => setSearch((p) => ({ ...p, notFound: v }));
-  const setStrictness = (v: Strictness) => setSearch((p) => ({ ...p, strictness: v }));
 
   const [loading, setLoading] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -73,7 +72,7 @@ export default function SearchPage({ onBack }: { onBack: () => void }) {
     const newNF: string[] = [];
     const prebuilt = dbIndexRef.current ?? undefined;
     for (const q of queries) {
-      const res = searchOne(db, q, prebuilt, strictness);
+      const res = searchOne(db, q, prebuilt, "normal");
       if (res.length === 0) newNF.push(q);
       else for (const r of res) newHits.push(recordToHit(r, q));
     }
@@ -347,33 +346,6 @@ export default function SearchPage({ onBack }: { onBack: () => void }) {
           </div>
         </div>
 
-        {/* Строгость сверки */}
-        <div className="mt-4 pt-4 border-t border-violet-400/10 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[11px] uppercase tracking-[0.18em] text-violet-200/60">Строгость сверки</span>
-            <span className="text-[10px] text-violet-200/40">
-              {strictness === "strict" && "Строгая — меньше ложных совпадений"}
-              {strictness === "normal" && "Обычная — проверенные и надежные пороги"}
-              {strictness === "lax" && "Мягкая — ловит больше потенциальных опечаток"}
-            </span>
-          </div>
-          <div className="flex bg-[#0a0c20]/50 rounded-xl border border-violet-400/10 p-1">
-            {([["strict", "Строгая", "меньше ложных совпадений"], ["normal", "Обычная", "проверенные пороги"], ["lax", "Мягкая", "ловит больше опечаток"]] as const).map(([v, label, desc]) => (
-              <button
-                key={v}
-                title={desc}
-                onClick={() => setStrictness(v)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                  strictness === v
-                    ? "bg-violet-600/30 text-violet-200 border border-violet-500/35"
-                    : "text-violet-200/40 hover:text-violet-200/80 border border-transparent"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="mt-4 flex justify-end gap-3">
           <button
