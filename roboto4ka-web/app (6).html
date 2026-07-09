@@ -1,0 +1,1427 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сверка списков Excel</title>
+<style>
+:root{
+  --text:#2C2C2B; --text2:#7D7A75; --canvas:#F9F8F7; --surface:#FFFFFF;
+  --surface2:#F0EFED; --border:#E6E5E3; --accent:#2783DE; --accent-soft:#E5F2FC;
+  --green:#46A171; --green-soft:#E8F1EC; --orange:#D5803B; --orange-soft:#FBEBDE;
+  --red:#E56458; --red-soft:#FCE9E7;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--text);
+  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px}
+header{padding:40px 0 8px}
+h1{font-size:28px;margin:0 0 8px;letter-spacing:-.01em}
+.sub{color:var(--text2);margin:0 0 12px;max-width:720px}
+h2{font-size:18px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+.stepnum{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+  border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:600;flex:none}
+.hint{color:var(--text2);font-size:14px;margin:0 0 16px}
+main{padding-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:24px;margin:16px 0}
+.chip{display:inline-block;font-size:13px;padding:3px 10px;border-radius:999px;
+  background:var(--surface2);color:var(--text2)}
+.chip.ok{background:var(--green-soft);color:var(--green)}
+.chip.err{background:var(--red-soft);color:var(--red)}
+.dropzone{border:1.5px dashed var(--border);border-radius:8px;padding:28px 16px;text-align:center;
+  color:var(--text2);cursor:pointer;transition:border-color .15s,background .15s;font-size:15px}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.hidden{display:none!important}
+.filehead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.filename{font-weight:600;font-size:15px;word-break:break-all}
+.linkbtn{background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;padding:0;text-decoration:underline}
+.previewbox{overflow-x:auto;border:1px solid var(--border);border-radius:8px;margin:12px 0}
+table.preview{border-collapse:collapse;font-size:13px;white-space:nowrap;min-width:100%}
+table.preview th,table.preview td{border:1px solid var(--border);padding:4px 8px;max-width:220px;
+  overflow:hidden;text-overflow:ellipsis}
+table.preview th{background:var(--surface2);color:var(--text2);font-weight:600;text-align:center}
+table.preview td.rownum{background:var(--surface2);color:var(--text2);text-align:center}
+table.preview th.colFio{background:var(--accent-soft);color:var(--accent)}
+table.preview th.colPhone{background:var(--green-soft);color:var(--green)}
+.controls{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;margin-top:8px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:180px}
+.field>span{font-size:13px;color:var(--text2)}
+select,input[type=number]{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--border);
+  border-radius:8px;background:var(--surface);color:var(--text);max-width:280px}
+input[type=number]{width:110px}
+select:focus,input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.radiogroup{display:flex;gap:16px;flex-wrap:wrap;font-size:14px}
+.radiogroup label,.optrow label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.mode{border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:8px 0;cursor:pointer;display:block}
+.mode.active{border-color:var(--accent);background:var(--accent-soft)}
+.mode>label{display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-weight:600}
+.mode .sub-opts{margin:10px 0 0 26px;display:flex;flex-direction:column;gap:8px;font-size:14px;font-weight:400}
+.optrow{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.swatches{display:inline-flex;gap:6px;vertical-align:middle}
+.swatch{width:26px;height:26px;border-radius:6px;border:2px solid transparent;cursor:pointer;padding:0}
+.swatch.sel{border-color:var(--text);box-shadow:0 0 0 2px #fff inset}
+.runbtn{font:inherit;font-size:16px;font-weight:600;color:#fff;background:var(--accent);border:none;
+  border-radius:8px;padding:12px 28px;cursor:pointer;min-height:48px}
+.runbtn:disabled{background:var(--surface2);color:var(--text2);cursor:not-allowed}
+.runbtn:not(:disabled):hover{filter:brightness(1.05)}
+.progress{margin-top:14px}
+.progress .bar{height:8px;background:var(--surface2);border-radius:999px;overflow:hidden}
+.progress .fill{height:100%;width:0%;background:var(--accent);transition:width .15s}
+.progress .ptext{font-size:13px;color:var(--text2);margin-top:6px}
+.error{color:var(--red);background:var(--red-soft);border-radius:8px;padding:10px 14px;font-size:14px;margin-top:12px}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 4px}
+.stat{border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:120px}
+.stat .num{font-size:22px;font-weight:700}
+.stat .lbl{font-size:13px;color:var(--text2)}
+.stat.green{background:var(--green-soft);border-color:transparent}.stat.green .num{color:var(--green)}
+.stat.orange{background:var(--orange-soft);border-color:transparent}.stat.orange .num{color:var(--orange)}
+.stat.red{background:var(--red-soft);border-color:transparent}.stat.red .num{color:var(--red)}
+.dlbtn{font:inherit;font-size:15px;font-weight:600;color:#fff;background:var(--green);border:none;
+  border-radius:8px;padding:12px 24px;cursor:pointer;margin-top:12px;min-height:48px}
+.dlbtn:hover{filter:brightness(1.05)}
+footer{color:var(--text2);font-size:13px;padding:8px 0 40px;text-align:center}
+@media (max-width:600px){ .wrap{padding:0 16px} .card{padding:16px} h1{font-size:22px} }
+.card.dimmed{opacity:.45;pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Сверка списков Excel</h1>
+    <p class="sub">Выберите два файла и укажите, где ФИО и телефон. Приложение найдёт совпадения
+      с учётом опечаток, «ё/е», разного порядка слов и форматов телефона — и покрасит строки
+      или выгрузит результат отдельным файлом.</p>
+    <span id="libStatus" class="chip">⏳ Загрузка компонентов…</span>
+  </div>
+</header>
+<main class="wrap">
+
+  <!-- ШАГ 1 -->
+  <section class="card">
+    <h2><span class="stepnum">1</span> Файл, который проверяем</h2>
+    <p class="hint">Список людей, которых нужно найти в базе. Его же можно покрасить.</p>
+    <div class="dropzone" id="dz1">📂 Нажмите или перетащите сюда файл (.xlsx, .xls, .csv)</div>
+    <input type="file" id="input1" accept=".xlsx,.xls,.xlsm,.csv" hidden>
+    <div class="filePanel hidden" id="panel1"></div>
+  </section>
+
+  <!-- ШАГ 2 -->
+  <section class="card" id="card2">
+    <h2><span class="stepnum">2</span> База для сравнения</h2>
+    <p class="hint">Файл, в котором ищем совпадения (например, база проголосовавших).</p>
+    <div class="dropzone" id="dz2">📂 Нажмите или перетащите сюда файл (.xlsx, .xls, .csv)</div>
+    <input type="file" id="input2" accept=".xlsx,.xls,.xlsm,.csv" hidden>
+    <div class="filePanel hidden" id="panel2"></div>
+  </section>
+
+  <!-- ШАГ 3 -->
+  <section class="card">
+    <h2><span class="stepnum">3</span> Что сделать с результатом</h2>
+    <p class="hint">Остальные столбцы (адрес и всё прочее) сохраняются автоматически — их указывать не нужно.</p>
+
+    <div class="mode active" id="modeColorBox">
+      <label><input type="radio" name="mode" value="color" checked>
+        🎨 Покрасить строки в файле 1</label>
+      <div class="sub-opts">
+        <div class="optrow">Цвет найденных:
+          <span class="swatches" id="swatches">
+            <button type="button" class="swatch sel" data-color="92D050" style="background:#92D050" title="Зелёный"></button>
+            <button type="button" class="swatch" data-color="FFFF00" style="background:#FFFF00" title="Жёлтый"></button>
+            <button type="button" class="swatch" data-color="9BC2E6" style="background:#9BC2E6" title="Голубой"></button>
+            <button type="button" class="swatch" data-color="D9D9D9" style="background:#D9D9D9" title="Серый"></button>
+          </span>
+        </div>
+        <label><input type="checkbox" id="optRed" checked> Ненайденных красить красным</label>
+        <label><input type="checkbox" id="optLabel" checked> Добавить столбец «Результат сверки»</label>
+        <span class="hint" style="margin:0">Результат сохраняется в новый чистый .xlsx: все данные и цвета на месте, сложное оформление исходного файла не переносится.</span>
+      </div>
+    </div>
+
+    <div class="mode" id="modeExportBox">
+      <label><input type="radio" name="mode" value="export">
+        📄 Выгрузить отдельным файлом Excel</label>
+      <div class="sub-opts">
+        <div class="radiogroup">
+          <label><input type="radio" name="expWhat" value="both" checked> Найденных и ненайденных (два листа)</label>
+          <label><input type="radio" name="expWhat" value="found"> Только найденных</label>
+          <label><input type="radio" name="expWhat" value="notfound"> Только ненайденных</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="mode" id="modeDupesBox">
+      <label><input type="radio" name="mode" value="dupes">
+        🔍 Найти дубли внутри файла 1</label>
+      <div class="sub-opts">
+        <span class="hint" style="margin:0">Файл 2 не нужен. Найдёт повторы внутри списка: одинаковые ФИО (в том числе с опечаткой, «ё/е» или другим порядком слов) и совпадающие телефоны. Результат — отдельный Excel со списком групп дублей.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ЗАПУСК -->
+  <section class="card">
+    <button class="runbtn" id="runBtn" disabled>▶ Запустить сверку</button>
+    <span class="hint" id="runHint" style="margin-left:12px">Сначала выберите оба файла.</span>
+    <div class="progress hidden" id="progress">
+      <div class="bar"><div class="fill" id="progFill"></div></div>
+      <div class="ptext" id="progText"></div>
+    </div>
+    <div class="error hidden" id="runError"></div>
+  </section>
+
+  <!-- РЕЗУЛЬТАТ -->
+  <section class="card hidden" id="resultCard">
+    <h2>✅ Готово</h2>
+    <div class="stats" id="stats"></div>
+    <div id="disputedBox"></div>
+    <button class="dlbtn" id="dlBtn">⬇ Скачать результат</button>
+  </section>
+
+</main>
+<footer class="wrap">Файлы обрабатываются прямо в вашем браузере и никуда не отправляются.<br>
+При первом открытии нужен интернет — страница подгружает библиотеки для чтения Excel.</footer>
+
+<script>
+"use strict";
+/* ===== Логика сверки (портирована с Python-скриптов) ===== */
+
+function normStr(v) {
+	if (v === null || v === undefined) return "";
+	return String(v).trim();
+}
+
+function normalizePhone(v) {
+	let s = normStr(v);
+	if (!s || s.toLowerCase() === "nan") return null;
+	// научная нотация вида 8.9123456789e+10
+	if (/^[\d.,]+e\+?\d+$/i.test(s)) {
+		const num = Number(s.replace(",", "."));
+		if (isFinite(num)) s = num.toFixed(0);
+	}
+	let d = s.replace(/\D/g, "");
+	if (d.length === 11 && d[0] === "8") d = "7" + d.slice(1);
+	else if (d.length === 10) d = "7" + d;
+	return d.length === 11 ? d : null;
+}
+
+function normalizeName(v) {
+	const s = normStr(v);
+	if (!s || s.toLowerCase() === "nan") return null;
+	return s.toLowerCase().replace(/\s+/g, " ").trim() || null;
+}
+
+function normalizeFuzzy(name) {
+	if (!name) return null;
+	let n = name.replace(/ё/g, "е");
+	n = n.replace(/[-\s]+$/, "");
+	n = n.replace(/\s+/g, " ").trim();
+	return n || null;
+}
+
+function canonicalKey(name) {
+	if (!name) return null;
+	return name.split(" ").sort().join(" ");
+}
+
+/* --- Нечёткое сходство (аналог difflib.SequenceMatcher.ratio) --- */
+function _lcsBlock(a, alo, ahi, b, blo, bhi) {
+	let besti = alo, bestj = blo, bestsize = 0;
+	let j2len = new Map();
+	for (let i = alo; i < ahi; i++) {
+		const newj2len = new Map();
+		const ch = a[i];
+		for (let j = blo; j < bhi; j++) {
+			if (b[j] === ch) {
+				const k = (j2len.get(j - 1) || 0) + 1;
+				newj2len.set(j, k);
+				if (k > bestsize) { besti = i - k + 1; bestj = j - k + 1; bestsize = k; }
+			}
+		}
+		j2len = newj2len;
+	}
+	return [besti, bestj, bestsize];
+}
+
+function _matchedCount(a, alo, ahi, b, blo, bhi) {
+	if (alo >= ahi || blo >= bhi) return 0;
+	const r = _lcsBlock(a, alo, ahi, b, blo, bhi);
+	const i = r[0], j = r[1], k = r[2];
+	if (k === 0) return 0;
+	return k + _matchedCount(a, alo, i, b, blo, j) + _matchedCount(a, i + k, ahi, b, j + k, bhi);
+}
+
+function simRatio(a, b) {
+	if (!a || !b) return 0;
+	if (a === b) return 1;
+	const total = a.length + b.length;
+	return (2 * _matchedCount(a, 0, a.length, b, 0, b.length)) / total;
+}
+
+function sortedWords(s) {
+	return s.split(" ").sort().join(" ");
+}
+
+function fuzzySim(a, b) {
+	if (!a || !b) return 0;
+	return Math.max(simRatio(a, b), simRatio(sortedWords(a), sortedWords(b)));
+}
+
+function surnameSim(a, b) {
+	if (!a || !b) return 0;
+	const wa = a.split(" ")[0] || "";
+	const wb = b.split(" ")[0] || "";
+	return simRatio(wa, wb);
+}
+
+function namePatronymicSim(a, b) {
+	if (!a || !b) return 0;
+	const ra = a.split(" ").slice(1).join(" ");
+	const rb = b.split(" ").slice(1).join(" ");
+	if (!ra || !rb) return 0;
+	return simRatio(ra, rb);
+}
+
+/* Проверка по словам: если какое-то слово ФИО совпадает слабо — это другой человек, а не опечатка */
+function wordsAlignedOk(a, b) {
+	const wa = a.split(" ").filter(Boolean);
+	const wb = b.split(" ").filter(Boolean);
+	if (wa.length !== wb.length) return true;
+	let ok = true;
+	for (let i = 0; i < wa.length; i++) {
+		if (simRatio(wa[i], wb[i]) < THRESH.word) { ok = false; break; }
+	}
+	if (ok) return true;
+	const sa = wa.slice().sort();
+	const sb = wb.slice().sort();
+	for (let i = 0; i < sa.length; i++) {
+		if (simRatio(sa[i], sb[i]) < THRESH.word) return false;
+	}
+	return true;
+}
+
+function charCounts(s) {
+	const cnt = Object.create(null);
+	for (const ch of s) cnt[ch] = (cnt[ch] || 0) + 1;
+	return cnt;
+}
+
+/* Быстрая верхняя оценка сходства (аналог difflib.quick_ratio) */
+function quickRatio(a, b) {
+	const total = a.length + b.length;
+	if (!total) return 0;
+	const cnt = Object.create(null);
+	for (const ch of b) cnt[ch] = (cnt[ch] || 0) + 1;
+	let m = 0;
+	const avail = Object.create(null);
+	for (const ch of a) {
+		const n = ch in avail ? avail[ch] : cnt[ch] || 0;
+		avail[ch] = n - 1;
+		if (n > 0) m++;
+	}
+	return (2 * m) / total;
+}
+
+/* --- Индекс базы и сверка --- */
+const THRESH = {
+	word: 0.75, // каждое слово ФИО похоже >= 75% (иначе это другой человек)
+	phoneFuzzy: 0.8, // телефон совпал + ФИО похоже >= 80%
+	surname: 0.82, // фамилия похожа >= 82%
+	nameOnly: 0.9, // только ФИО (без телефона) похоже >= 90%
+	nameChangeFnp: 0.95, // имя+отчество >= 95% (вероятная смена фамилии)
+};
+
+function makeIndex() {
+	return {
+		exact: new Set(),
+		fuzzy: new Set(),
+		canon: new Set(),
+		phones: new Set(),
+		phoneToNames: new Map(),
+		fuzzyList: [],
+		fuzzyMeta: [],
+		count: 0,
+	};
+}
+
+function addToIndex(idx, rawFio, rawPhone) {
+	const nExact = normalizeName(rawFio);
+	const nFuzz = normalizeFuzzy(nExact);
+	const nCanon = canonicalKey(nFuzz);
+	const phone = normalizePhone(rawPhone);
+	if (nExact) idx.exact.add(nExact);
+	if (nFuzz && !idx.fuzzy.has(nFuzz)) {
+		idx.fuzzy.add(nFuzz);
+		idx.fuzzyList.push(nFuzz);
+		idx.fuzzyMeta.push({ name: nFuzz, len: nFuzz.length, cnt: charCounts(nFuzz) });
+	}
+	if (nCanon) idx.canon.add(nCanon);
+	if (phone) {
+		idx.phones.add(phone);
+		if (nFuzz) {
+			if (!idx.phoneToNames.has(phone)) idx.phoneToNames.set(phone, []);
+			idx.phoneToNames.get(phone).push(nFuzz);
+		}
+	}
+	if (nExact || phone) idx.count++;
+}
+
+/*
+ Статусы результата:
+  exact      — точное совпадение ФИО (в т.ч. ё/е и порядок слов)
+  typo       — ФИО с опечаткой (подтверждено телефоном или очень высоким сходством)
+  namechange — телефон совпал, имя+отчество совпали (вероятная смена фамилии)
+  phone      — совпал только телефон (ФИО в строке пустое)
+  disputed   — телефон совпал, но ФИО сильно другое (спорный случай)
+  notfound   — не найден
+  empty      — пустая строка
+*/
+function matchRecord(idx, rawFio, rawPhone, opts) {
+	opts = opts || {};
+	const nExact = normalizeName(rawFio);
+	const nFuzz = normalizeFuzzy(nExact);
+	const nCanon = canonicalKey(nFuzz);
+	const phone = normalizePhone(rawPhone);
+
+	if (!nExact && !phone) return { status: "empty" };
+
+	if (nExact && idx.exact.has(nExact)) return { status: "exact" };
+	if (nFuzz && idx.fuzzy.has(nFuzz)) return { status: "exact" };
+	if (nCanon && idx.canon.has(nCanon)) return { status: "exact" };
+
+	if (phone && idx.phones.has(phone)) {
+		const cands = idx.phoneToNames.get(phone) || [];
+		if (!nFuzz) return { status: "phone" };
+		let bestSim = 0;
+		let bestCand = cands[0] || "";
+		for (const cand of cands) {
+			const overall = fuzzySim(nFuzz, cand);
+			if (overall > bestSim) { bestSim = overall; bestCand = cand; }
+			if (overall >= THRESH.phoneFuzzy && surnameSim(nFuzz, cand) >= THRESH.surname) {
+				return { status: "typo", matchedName: cand, sim: overall };
+			}
+			if (namePatronymicSim(nFuzz, cand) >= THRESH.nameChangeFnp) {
+				return { status: "namechange", matchedName: cand, sim: overall };
+			}
+		}
+		return { status: "disputed", matchedName: bestCand, sim: bestSim };
+	}
+
+	// Нечёткий поиск только по ФИО (без телефона)
+	if (nFuzz && opts.nameOnlyScan !== false) {
+		const la = nFuzz.length;
+		const qCnt = charCounts(nFuzz);
+		for (const meta of idx.fuzzyMeta) {
+			const lb = meta.len;
+			if ((2 * Math.min(la, lb)) / (la + lb) < THRESH.nameOnly) continue;
+			let mm = 0;
+			const cCnt = meta.cnt;
+			for (const ch in cCnt) {
+				const q = qCnt[ch];
+				if (q) mm += q < cCnt[ch] ? q : cCnt[ch];
+			}
+			if ((2 * mm) / (la + lb) < THRESH.nameOnly) continue;
+			const overall = fuzzySim(nFuzz, meta.name);
+			if (overall >= THRESH.nameOnly && surnameSim(nFuzz, meta.name) >= THRESH.surname && wordsAlignedOk(nFuzz, meta.name)) {
+				return { status: "typo", matchedName: meta.name, sim: overall };
+			}
+		}
+	}
+
+	return { status: "notfound" };
+}
+
+
+</script>
+
+<script>
+"use strict";
+/* ================= Загрузка библиотеки (xlsx-js-style) ================= */
+const LIBS = {
+  XLSX: [
+    "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js",
+    "https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js",
+    "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.full.min.js",
+    "https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.full.min.js",
+  ],
+  JSZIP: [
+    "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
+    "https://unpkg.com/jszip@3.10.1/dist/jszip.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",
+  ],
+};
+function loadScript(src){
+  return new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = () => res(); s.onerror = () => rej(new Error(src));
+    document.head.appendChild(s);
+  });
+}
+async function loadWithFallback(globalName, urls){
+  for (const u of urls){
+    if (window[globalName]) return;
+    try { await loadScript(u); } catch(e) { /* пробуем следующий CDN */ }
+  }
+  if (!window[globalName]) throw new Error(globalName);
+}
+let libsReady = false;
+(async () => {
+  const chip = document.getElementById("libStatus");
+  try {
+    await loadWithFallback("XLSX", LIBS.XLSX);
+    loadWithFallback("JSZip", LIBS.JSZIP).catch(() => {}); // необязательная: без неё файл без дублей соберётся упрощённо
+    libsReady = true;
+    chip.textContent = "✓ Готово к работе";
+    chip.className = "chip ok";
+    updateRunState();
+  } catch(e) {
+    chip.textContent = "⚠ Нет интернета — не удалось загрузить компоненты. Подключитесь к сети и обновите страницу.";
+    chip.className = "chip err";
+  }
+})();
+
+/* ================= Утилиты ================= */
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function colLetter(i){ // 0-based -> A, B, ... AA
+  let s = "", n = i;
+  while (true){ s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; if (n < 0) break; }
+  return s;
+}
+function tick(){ return new Promise(r => setTimeout(r, 0)); }
+
+/* ================= Состояние ================= */
+const state = {
+  f1: null, // {name, buf, wb, sheet, rows, cfg:{start, fioMode, fio, fam, im, ot, phone}}
+  f2: null,
+  matchColor: "92D050",
+  resultBlob: null,
+  resultName: "",
+  dupGroups: null,
+};
+
+/* ================= Чтение файла ================= */
+function sheetRows(wb, sheetName){
+  const ws = wb.Sheets[sheetName];
+  if (!ws || !ws["!ref"]) return [];
+  const range = XLSX.utils.decode_range(ws["!ref"]);
+  const raw = XLSX.utils.sheet_to_json(ws, { header:1, raw:false, defval:"", blankrows:true });
+  const colPad = new Array(range.s.c).fill("");
+  const rows = [];
+  for (let i = 0; i < range.s.r; i++) rows.push([]);
+  for (const r of raw) rows.push(colPad.concat(r));
+  return rows; // rows[i] = Excel-строка i+1
+}
+
+function guessColumns(rows){
+  const g = { headerRow:-1, fio:-1, fam:-1, im:-1, ot:-1, phone:-1 };
+  let bestHits = 0;
+  const lim = Math.min(rows.length, 10);
+  for (let r = 0; r < lim; r++){
+    const row = rows[r] || [];
+    const cur = { fio:-1, fam:-1, im:-1, ot:-1, phone:-1 };
+    let hits = 0;
+    for (let c = 0; c < row.length; c++){
+      const v = String(row[c] || "").toLowerCase().trim();
+      if (!v) continue;
+      if (cur.fio < 0 && (v.includes("фио") || v.includes("ф.и.о") || (v.includes("фамилия") && v.includes("имя")))) { cur.fio = c; hits++; continue; }
+      if (cur.fam < 0 && v.startsWith("фамил")) { cur.fam = c; hits++; continue; }
+      if (cur.im < 0 && (v === "имя" || v.startsWith("имя"))) { cur.im = c; hits++; continue; }
+      if (cur.ot < 0 && v.startsWith("отчеств")) { cur.ot = c; hits++; continue; }
+      if (cur.phone < 0 && (v.includes("телефон") || v.includes("тел.") || v === "тел" || v.includes("номер тел"))) { cur.phone = c; hits++; continue; }
+    }
+    if (hits > bestHits){ bestHits = hits; g.headerRow = r; Object.assign(g, cur); }
+  }
+  return g;
+}
+
+async function handleFile(which, file){
+  if (!libsReady){ alert("Компоненты ещё загружаются, попробуйте через пару секунд."); return; }
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type:"array" });
+    const sheet = wb.SheetNames[0];
+    const rows = sheetRows(wb, sheet);
+    const guess = guessColumns(rows);
+    const cfg = {
+      start: guess.headerRow >= 0 ? guess.headerRow + 2 : 2,
+      fioMode: (guess.fio < 0 && guess.fam >= 0 && guess.im >= 0) ? "three" : "single",
+      fio: guess.fio, fam: guess.fam, im: guess.im, ot: guess.ot, phone: guess.phone,
+    };
+    state[which] = { name:file.name, buf, wb, sheet, rows, cfg };
+    renderPanel(which);
+    updateRunState();
+  } catch(e) {
+    alert("Не удалось прочитать файл: " + e.message);
+  }
+}
+
+/* ================= Отрисовка панели файла ================= */
+function renderPanel(which){
+  const st = state[which];
+  const idx = which === "f1" ? "1" : "2";
+  const panel = document.getElementById("panel" + idx);
+  const dz = document.getElementById("dz" + idx);
+  dz.classList.add("hidden");
+  panel.classList.remove("hidden");
+
+  const maxCols = Math.min(Math.max(...st.rows.slice(0, 20).map(r => r.length), 1), 30);
+  const sample = c => {
+    for (let r = 0; r < Math.min(st.rows.length, 15); r++){
+      const v = String((st.rows[r] || [])[c] || "").trim();
+      if (v) return v.length > 22 ? v.slice(0, 22) + "…" : v;
+    }
+    return "";
+  };
+  const colOptions = sel => {
+    let h = '<option value="-1">— не выбран —</option>';
+    for (let c = 0; c < maxCols; c++){
+      const smp = sample(c);
+      h += `<option value="${c}" ${sel === c ? "selected" : ""}>${colLetter(c)}${smp ? " — «" + esc(smp) + "»" : ""}</option>`;
+    }
+    return h;
+  };
+  const sheetOptions = st.wb.SheetNames.map(n =>
+    `<option value="${esc(n)}" ${n === st.sheet ? "selected" : ""}>${esc(n)}</option>`).join("");
+
+  const single = st.cfg.fioMode === "single";
+  panel.innerHTML = `
+    <div class="filehead">
+      <span class="filename">📄 ${esc(st.name)}</span>
+      <button type="button" class="linkbtn" id="change${idx}">выбрать другой файл</button>
+      ${st.wb.SheetNames.length > 1 ? `<span class="field" style="min-width:0"><select id="sheet${idx}">${sheetOptions}</select></span>` : ""}
+    </div>
+    <div class="previewbox">${previewTable(st, maxCols)}</div>
+    <div class="controls">
+      <div class="field"><span>Данные начинаются со строки</span>
+        <input type="number" id="start${idx}" min="1" value="${st.cfg.start}"></div>
+      <div class="field"><span>ФИО записано</span>
+        <div class="radiogroup">
+          <label><input type="radio" name="fioMode${idx}" value="single" ${single ? "checked" : ""}> в одном столбце</label>
+          <label><input type="radio" name="fioMode${idx}" value="three" ${!single ? "checked" : ""}> в трёх (Ф/И/О)</label>
+        </div></div>
+      <div class="field ${single ? "" : "hidden"}" id="fioSingle${idx}"><span>Столбец ФИО</span>
+        <select id="fio${idx}">${colOptions(st.cfg.fio)}</select></div>
+      <div class="field ${single ? "hidden" : ""}" id="fioFam${idx}"><span>Фамилия</span>
+        <select id="fam${idx}">${colOptions(st.cfg.fam)}</select></div>
+      <div class="field ${single ? "hidden" : ""}" id="fioIm${idx}"><span>Имя</span>
+        <select id="im${idx}">${colOptions(st.cfg.im)}</select></div>
+      <div class="field ${single ? "hidden" : ""}" id="fioOt${idx}"><span>Отчество</span>
+        <select id="ot${idx}">${colOptions(st.cfg.ot)}</select></div>
+      <div class="field"><span>Столбец телефона (необязательно)</span>
+        <select id="phone${idx}">${colOptions(st.cfg.phone)}</select></div>
+    </div>`;
+
+  document.getElementById("change" + idx).onclick = () => document.getElementById("input" + idx).click();
+  const sheetSel = document.getElementById("sheet" + idx);
+  if (sheetSel) sheetSel.onchange = () => {
+    st.sheet = sheetSel.value;
+    st.rows = sheetRows(st.wb, st.sheet);
+    const g = guessColumns(st.rows);
+    st.cfg = { start: g.headerRow >= 0 ? g.headerRow + 2 : 2,
+      fioMode: (g.fio < 0 && g.fam >= 0 && g.im >= 0) ? "three" : "single",
+      fio: g.fio, fam: g.fam, im: g.im, ot: g.ot, phone: g.phone };
+    renderPanel(which);
+  };
+  document.getElementById("start" + idx).onchange = e => { st.cfg.start = Math.max(1, +e.target.value || 1); };
+  panel.querySelectorAll(`input[name=fioMode${idx}]`).forEach(r => r.onchange = () => {
+    st.cfg.fioMode = r.value; renderPanel(which);
+  });
+  ["fio","fam","im","ot","phone"].forEach(k => {
+    const el = document.getElementById(k + idx);
+    if (el) el.onchange = () => { st.cfg[k] = +el.value; renderPanel(which); };
+  });
+}
+
+function previewTable(st, maxCols){
+  const cfg = st.cfg;
+  const fioCols = cfg.fioMode === "single" ? [cfg.fio] : [cfg.fam, cfg.im, cfg.ot];
+  let h = '<table class="preview"><tr><th></th>';
+  for (let c = 0; c < maxCols; c++){
+    const cls = fioCols.includes(c) ? "colFio" : (c === cfg.phone ? "colPhone" : "");
+    const tag = fioCols.includes(c) ? " · ФИО" : (c === cfg.phone ? " · тел." : "");
+    h += `<th class="${cls}">${colLetter(c)}${tag}</th>`;
+  }
+  h += "</tr>";
+  const lim = Math.min(st.rows.length, 8);
+  for (let r = 0; r < lim; r++){
+    h += `<tr><td class="rownum">${r + 1}</td>`;
+    for (let c = 0; c < maxCols; c++){
+      let v = String((st.rows[r] || [])[c] ?? "");
+      if (v.length > 30) v = v.slice(0, 30) + "…";
+      h += `<td>${esc(v)}</td>`;
+    }
+    h += "</tr>";
+  }
+  h += "</table>";
+  return h;
+}
+
+/* ================= Выбор файлов ================= */
+[["1","f1"],["2","f2"]].forEach(([idx, which]) => {
+  const dz = document.getElementById("dz" + idx);
+  const input = document.getElementById("input" + idx);
+  dz.onclick = () => input.click();
+  input.onchange = () => { if (input.files[0]) handleFile(which, input.files[0]); input.value = ""; };
+  dz.ondragover = e => { e.preventDefault(); dz.classList.add("drag"); };
+  dz.ondragleave = () => dz.classList.remove("drag");
+  dz.ondrop = e => {
+    e.preventDefault(); dz.classList.remove("drag");
+    if (e.dataTransfer.files[0]) handleFile(which, e.dataTransfer.files[0]);
+  };
+});
+
+/* ================= Режимы ================= */
+function currentMode(){ return document.querySelector("input[name=mode]:checked").value; }
+document.querySelectorAll("input[name=mode]").forEach(r => r.onchange = () => {
+  document.getElementById("modeColorBox").classList.toggle("active", r.value === "color" && r.checked);
+  document.getElementById("modeExportBox").classList.toggle("active", r.value === "export" && r.checked);
+  document.getElementById("modeDupesBox").classList.toggle("active", r.value === "dupes" && r.checked);
+  const dupes = r.value === "dupes" && r.checked;
+  document.getElementById("card2").classList.toggle("dimmed", dupes);
+  document.getElementById("runBtn").textContent = dupes ? "▶ Найти дубли" : "▶ Запустить сверку";
+  updateRunState();
+});
+document.getElementById("modeColorBox").onclick = e => {
+  if (e.target.closest("input,button,label")) return;
+  document.querySelector('input[name=mode][value=color]').click();
+};
+document.getElementById("modeExportBox").onclick = e => {
+  if (e.target.closest("input,button,label")) return;
+  document.querySelector('input[name=mode][value=export]').click();
+};
+document.getElementById("modeDupesBox").onclick = e => {
+  if (e.target.closest("input,button,label")) return;
+  document.querySelector('input[name=mode][value=dupes]').click();
+};
+document.querySelectorAll(".swatch").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".swatch").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  state.matchColor = b.dataset.color;
+});
+
+/* ================= Запуск ================= */
+function updateRunState(){
+  const btn = document.getElementById("runBtn");
+  const hint = document.getElementById("runHint");
+  const needF2 = currentMode() !== "dupes";
+  const ready = libsReady && state.f1 && (!needF2 || state.f2);
+  btn.disabled = !ready;
+  hint.textContent = ready ? "" : (!libsReady ? "Идёт загрузка компонентов…" : (needF2 ? "Сначала выберите оба файла." : "Выберите файл 1."));
+}
+
+function getFio(row, cfg){
+  if (cfg.fioMode === "single") return cfg.fio >= 0 ? row[cfg.fio] : "";
+  const parts = [cfg.fam, cfg.im, cfg.ot].filter(c => c >= 0).map(c => String(row[c] || "").trim());
+  return parts.filter(p => p && p.toLowerCase() !== "nan").join(" ");
+}
+function validateCfg(st, label){
+  const c = st.cfg;
+  if (c.fioMode === "single"){
+    if (c.fio < 0) return `${label}: выберите столбец с ФИО.`;
+  } else if (c.fam < 0 || c.im < 0){
+    return `${label}: выберите столбцы «Фамилия» и «Имя».`;
+  }
+  return null;
+}
+function setProgress(pct, text){
+  document.getElementById("progress").classList.remove("hidden");
+  document.getElementById("progFill").style.width = pct + "%";
+  document.getElementById("progText").textContent = text;
+}
+function showError(msg){
+  const el = document.getElementById("runError");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+}
+
+const STATUS_LABEL = {
+  exact: "найден", typo: "найден (опечатка)", namechange: "найден (смена фамилии?)",
+  phone: "телефон совпал", disputed: "спорный: телефон совпал, ФИО другое",
+  notfound: "не найден", empty: "",
+};
+const MATCHED = new Set(["exact","typo","namechange","phone"]);
+
+document.getElementById("runBtn").onclick = async () => {
+  document.getElementById("runError").classList.add("hidden");
+  document.getElementById("resultCard").classList.add("hidden");
+  const f1 = state.f1, f2 = state.f2;
+  const mode = currentMode();
+  const err = validateCfg(f1, "Файл 1") || (mode === "dupes" ? null : validateCfg(f2, "Файл 2"));
+  if (err){ showError(err); return; }
+  const btn = document.getElementById("runBtn");
+  btn.disabled = true;
+  try {
+    if (mode === "dupes"){
+      await runDupes(f1);
+      return;
+    }
+    /* --- Индекс базы (файл 2) --- */
+    const idx = makeIndex();
+    const rows2 = f2.rows;
+    for (let i = f2.cfg.start - 1; i < rows2.length; i++){
+      const row = rows2[i] || [];
+      addToIndex(idx, getFio(row, f2.cfg), f2.cfg.phone >= 0 ? row[f2.cfg.phone] : null);
+      if (i % 2000 === 0){ setProgress(Math.round(30 * i / rows2.length), `Читаю базу… ${i} строк`); await tick(); }
+    }
+    setProgress(30, `База загружена: ${idx.count} записей`);
+    await tick();
+
+    /* --- Сверка (файл 1) --- */
+    const rows1 = f1.rows;
+    const results = []; // {excelRow, res}
+    const counts = { exact:0, typo:0, namechange:0, phone:0, disputed:0, notfound:0 };
+    const disputed = [];
+    const total = Math.max(rows1.length - (f1.cfg.start - 1), 1);
+    for (let i = f1.cfg.start - 1; i < rows1.length; i++){
+      const row = rows1[i] || [];
+      const fio = getFio(row, f1.cfg);
+      const phone = f1.cfg.phone >= 0 ? row[f1.cfg.phone] : null;
+      const res = matchRecord(idx, fio, phone);
+      if (res.status !== "empty"){
+        results.push({ excelRow: i + 1, res, fio, phone });
+        counts[res.status]++;
+        if (res.status === "disputed") disputed.push({ row: i + 1, fio, phone, dbName: res.matchedName, sim: res.sim });
+      }
+      if (i % 500 === 0){
+        setProgress(30 + Math.round(60 * (i - f1.cfg.start + 1) / total), `Сверяю… ${i - f1.cfg.start + 1} из ${total}`);
+        await tick();
+      }
+    }
+    setProgress(90, "Формирую файл…");
+    await tick();
+
+    /* --- Результат --- */
+    let blob, outName;
+    const base = f1.name.replace(/\.[^.]+$/, "");
+    if (mode === "color"){
+      const out = await buildColored(f1, results);
+      blob = out; outName = base + "_РЕЗУЛЬТАТ.xlsx";
+    } else {
+      const what = document.querySelector("input[name=expWhat]:checked").value;
+      blob = await buildExport(f1, results, what);
+      outName = base + "_СВЕРКА.xlsx";
+    }
+    state.resultBlob = blob;
+    state.resultName = outName;
+    setProgress(100, "Готово");
+    showResults(counts, disputed);
+  } catch(e) {
+    console.error(e);
+    showError("Ошибка: " + e.message + ". Если файл сложный (защита, макросы) — попробуйте пересохранить его как обычный .xlsx или используйте режим выгрузки.");
+  } finally {
+    btn.disabled = false;
+    updateRunState();
+  }
+};
+
+/* --- Покраска: собираем новый чистый файл с данными и цветами --- */
+async function buildColored(f1, results){
+  const rows = f1.rows;
+  const maxCols = Math.min(Math.max(...rows.map(r => r.length), 1), 60);
+  const addLabel = document.getElementById("optLabel").checked;
+  const paintRed = document.getElementById("optRed").checked;
+  const aoa = [];
+  for (let r = 0; r < rows.length; r++){
+    const src = rows[r] || [];
+    const vals = [];
+    for (let c = 0; c < maxCols; c++) vals.push(src[c] ?? "");
+    if (addLabel) vals.push("");
+    aoa.push(vals);
+  }
+  if (addLabel){
+    const headerIdx = Math.max(f1.cfg.start - 2, 0);
+    aoa[headerIdx][maxCols] = "Результат сверки";
+    for (const { excelRow, res } of results){
+      if (aoa[excelRow - 1]) aoa[excelRow - 1][maxCols] = STATUS_LABEL[res.status];
+    }
+  }
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const mkFill = rgb => ({ fill: { patternType: "solid", fgColor: { rgb } } });
+  const matchS = mkFill(state.matchColor);
+  const redS = mkFill("FF0000");
+  const orangeS = mkFill("FFD966");
+  const lastC = addLabel ? maxCols : maxCols - 1;
+  for (const { excelRow, res } of results){
+    let s = null;
+    if (MATCHED.has(res.status)) s = matchS;
+    else if (res.status === "disputed") s = orangeS;
+    else if (res.status === "notfound" && paintRed) s = redS;
+    if (!s) continue;
+    for (let c = 0; c <= lastC; c++){
+      const addr = XLSX.utils.encode_cell({ r: excelRow - 1, c });
+      if (!ws[addr]) ws[addr] = { t: "s", v: "" };
+      ws[addr].s = s;
+    }
+  }
+  ws["!cols"] = colWidths(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Результат");
+  const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  return new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+function colWidths(aoa){
+  const cols = [];
+  const nCols = Math.max(...aoa.map(r => r.length), 1);
+  const lim = Math.min(aoa.length, 300);
+  for (let c = 0; c < nCols; c++){
+    let w = 8;
+    for (let r = 0; r < lim; r++) w = Math.max(w, String((aoa[r] || [])[c] ?? "").length);
+    cols.push({ wch: Math.min(w + 2, 45) });
+  }
+  return cols;
+}
+
+/* --- Выгрузка отдельным файлом --- */
+async function buildExport(f1, results, what){
+  const headerIdx = f1.cfg.start - 2; // строка заголовков (0-based), может быть < 0
+  const srcHeader = headerIdx >= 0 ? (f1.rows[headerIdx] || []) : [];
+  const maxCols = Math.min(Math.max(...f1.rows.map(r => r.length), 1), 60);
+  const headers = [];
+  for (let c = 0; c < maxCols; c++){
+    const v = String(srcHeader[c] || "").trim();
+    headers.push(v || colLetter(c));
+  }
+  headers.push("Результат сверки");
+  const wb = XLSX.utils.book_new();
+  const addSheet = (title, rowsList) => {
+    const aoa = [headers];
+    for (const { excelRow, res } of rowsList){
+      const src = f1.rows[excelRow - 1] || [];
+      const vals = [];
+      for (let c = 0; c < maxCols; c++) vals.push(src[c] ?? "");
+      vals.push(STATUS_LABEL[res.status]);
+      aoa.push(vals);
+    }
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    for (let c = 0; c < headers.length; c++){
+      const addr = XLSX.utils.encode_cell({ r: 0, c });
+      if (ws[addr]) ws[addr].s = { font: { bold: true } };
+    }
+    ws["!cols"] = colWidths(aoa);
+    ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(aoa.length - 1, 1), c: headers.length - 1 } }) };
+    XLSX.utils.book_append_sheet(wb, ws, title);
+  };
+  const found = results.filter(r => MATCHED.has(r.res.status));
+  const notfound = results.filter(r => r.res.status === "notfound");
+  const disputed = results.filter(r => r.res.status === "disputed");
+  if (what === "found" || what === "both") addSheet("Найдены", found);
+  if (what === "notfound" || what === "both") addSheet("Не найдены", notfound);
+  if (disputed.length) addSheet("Спорные", disputed);
+  if (!wb.SheetNames.length) addSheet("Пусто", []);
+  const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  return new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+/* --- Поиск дублей внутри файла 1 --- */
+async function runDupes(f1){
+  const rows = f1.rows;
+  const idx = makeIndex();
+  const byFuzz = new Map(), byCanon = new Map(), byPhone = new Map();
+  const groups = []; // массивы {excelRow, fio, phone, type}
+  const total = Math.max(rows.length - (f1.cfg.start - 1), 1);
+  for (let i = f1.cfg.start - 1; i < rows.length; i++){
+    const row = rows[i] || [];
+    const fio = getFio(row, f1.cfg);
+    const phone = f1.cfg.phone >= 0 ? row[f1.cfg.phone] : null;
+    const nExact = normalizeName(fio);
+    const nFuzz = normalizeFuzzy(nExact);
+    const nCanon = canonicalKey(nFuzz);
+    const ph = normalizePhone(phone);
+    if (!nFuzz && !ph) continue;
+    let gid = -1, type = "";
+    if (nFuzz && byFuzz.has(nFuzz)){ gid = byFuzz.get(nFuzz); type = "одинаковое ФИО"; }
+    else if (nCanon && byCanon.has(nCanon)){ gid = byCanon.get(nCanon); type = "ФИО, другой порядок слов"; }
+    else if (ph && byPhone.has(ph)){ gid = byPhone.get(ph); type = "совпал телефон"; }
+    else if (nFuzz){
+      const res = matchRecord(idx, fio, null);
+      if (res.status === "typo" && byFuzz.has(res.matchedName)){
+        gid = byFuzz.get(res.matchedName); type = "ФИО с опечаткой";
+      }
+    }
+    if (gid < 0){
+      gid = groups.length;
+      groups.push([]);
+      type = "";
+    }
+    groups[gid].push({ excelRow: i + 1, fio, phone, type: type || "первое упоминание" });
+    if (nFuzz && !byFuzz.has(nFuzz)) byFuzz.set(nFuzz, gid);
+    if (nCanon && !byCanon.has(nCanon)) byCanon.set(nCanon, gid);
+    if (ph && !byPhone.has(ph)) byPhone.set(ph, gid);
+    addToIndex(idx, fio, null);
+    if (i % 500 === 0){
+      setProgress(Math.round(90 * (i - f1.cfg.start + 1) / total), `Ищу дубли… ${i - f1.cfg.start + 1} из ${total}`);
+      await tick();
+    }
+  }
+  const dupGroups = groups.filter(g => g.length > 1);
+  state.dupGroups = dupGroups;
+  setProgress(95, "Формирую файл…");
+  await tick();
+  const base = f1.name.replace(/\.[^.]+$/, "");
+  state.resultBlob = buildDupesFile(dupGroups);
+  state.resultName = base + "_ДУБЛИ.xlsx";
+  setProgress(100, "Готово");
+  showDupesResults(total, dupGroups);
+}
+
+function buildDupesFile(dupGroups){
+  const headers = ["Группа", "Строка в файле", "ФИО", "Телефон", "Совпадение"];
+  const aoa = [headers];
+  const shade = [];
+  const groupStart = [];
+  let g = 1;
+  for (const grp of dupGroups){
+    let first = true;
+    for (const m of grp){
+      aoa.push([g, m.excelRow, m.fio || "", m.phone == null ? "" : String(m.phone), m.type]);
+      shade.push(g % 2 === 0);
+      groupStart.push(first);
+      first = false;
+    }
+    g++;
+  }
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  for (let c = 0; c < headers.length; c++){
+    const addr = XLSX.utils.encode_cell({ r: 0, c });
+    if (ws[addr]) ws[addr].s = { font: { bold: true } };
+  }
+  const grayFill = { patternType: "solid", fgColor: { rgb: "F2F2F2" } };
+  const groupBorder = { top: { style: "medium", color: { rgb: "666666" } } };
+  for (let r = 0; r < shade.length; r++){
+    if (!shade[r] && !groupStart[r]) continue;
+    for (let c = 0; c < headers.length; c++){
+      const addr = XLSX.utils.encode_cell({ r: r + 1, c });
+      if (!ws[addr]) ws[addr] = { t: "s", v: "" };
+      const s = {};
+      if (shade[r]) s.fill = grayFill;
+      if (groupStart[r]) s.border = groupBorder;
+      ws[addr].s = s;
+    }
+  }
+  ws["!cols"] = colWidths(aoa);
+  ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(aoa.length - 1, 1), c: headers.length - 1 } }) };
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Дубли");
+  const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  return new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+/* ===== Удаление строк напрямую из исходного .xlsx — оформление не трогаем вообще ===== */
+function xmlEsc2(t){
+  return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+}
+function xmlUnesc2(t){
+  return String(t).replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,"&");
+}
+/* какие строки удалять: excelRow -> {g, type} */
+function computeDupDeletions(delPhone){
+  const del = new Map();
+  let g = 1;
+  for (const grp of (state.dupGroups || [])){
+    for (let i = 1; i < grp.length; i++){
+      const m = grp[i];
+      if (!delPhone && m.type === "совпал телефон") continue; // разные люди с общим телефоном — не трогаем
+      del.set(m.excelRow, { g, type: m.type });
+    }
+    g++;
+  }
+  return del;
+}
+/* таблица для листа «Удалённые» */
+function buildRemovedAoa(del){
+  const f1 = state.f1, rows = f1.rows;
+  const removed = [];
+  for (let i = 0; i < rows.length; i++){
+    const info = del.get(i + 1);
+    if (info) removed.push({ excelRow: i + 1, row: rows[i] || [], g: info.g, type: info.type });
+  }
+  if (!removed.length) return null;
+  let headerRow = f1.cfg.start >= 2 ? (rows[f1.cfg.start - 2] || []) : [];
+  if (!headerRow.some(v => String(v == null ? "" : v).trim())){
+    const nCols = Math.max.apply(null, removed.map(r => r.row.length).concat([1]));
+    headerRow = Array.from({ length: nCols }, (_, c) => "Колонка " + (c + 1));
+  }
+  const remAoa = [["Строка в файле", "Группа", "Совпадение"].concat(headerRow)];
+  for (const r of removed) remAoa.push([r.excelRow, r.g, r.type].concat(r.row));
+  return remAoa;
+}
+/* путь к XML нужного листа внутри zip */
+function findSheetPath(wbXml, relsXml, sheetName){
+  let rid = null;
+  const re = /<sheet\b[^>]*?\/>/g;
+  let m;
+  while ((m = re.exec(wbXml))){
+    const nm = /name="([^"]*)"/.exec(m[0]);
+    const rm = /r:id="([^"]*)"/.exec(m[0]);
+    if (nm && rm && xmlUnesc2(nm[1]) === sheetName){ rid = rm[1]; break; }
+  }
+  if (!rid) return null;
+  const rr = new RegExp('<Relationship\\b[^>]*?Id="' + rid + '"[^>]*?/>').exec(relsXml);
+  if (!rr) return null;
+  const tg = /Target="([^"]*)"/.exec(rr[0]);
+  if (!tg) return null;
+  const t = xmlUnesc2(tg[1]);
+  return t.charAt(0) === "/" ? t.slice(1) : "xl/" + t;
+}
+/* вырезает строки из XML листа и перенумеровывает остальные */
+function transformSheetXml(xml, delSet){
+  let maxR = 0;
+  const reR = /<row\b[^>]*?r="(\d+)"/g;
+  let mm;
+  while ((mm = reR.exec(xml))){ const n = +mm[1]; if (n > maxR) maxR = n; }
+  if (!maxR) return null;
+  const delBefore = new Array(maxR + 2).fill(0);
+  let acc = 0;
+  for (let r = 1; r <= maxR + 1; r++){ delBefore[r] = acc; if (delSet.has(r)) acc++; }
+  const totalDel = acc;
+  const newNum = r => {
+    if (r > maxR + 1) return Math.max(1, r - totalDel);
+    return delSet.has(r) ? -1 : r - delBefore[r];
+  };
+  let removed = 0;
+  let out = xml.replace(/<row\b[^>]*?(?:\/>|>[\s\S]*?<\/row>)/g, chunk => {
+    const rm = /^<row\b[^>]*?r="(\d+)"/.exec(chunk);
+    if (!rm) return chunk;
+    const oldR = +rm[1];
+    if (delSet.has(oldR)){ removed++; return ""; }
+    const nr = newNum(oldR);
+    if (nr === oldR) return chunk;
+    let c2 = chunk.replace(/(<row\b[^>]*?r=")(\d+)(")/, (a, p1, p2, p3) => p2 === String(oldR) ? p1 + nr + p3 : a);
+    c2 = c2.replace(/(<c\b[^>]*?r="[A-Z]+)(\d+)(")/g, (a, p1, p2, p3) => p2 === String(oldR) ? p1 + nr + p3 : a);
+    return c2;
+  });
+  out = out.replace(/(<dimension\b[^>]*?ref="[A-Z]+\d*:[A-Z]+)(\d+)(")/, (a, p1, p2, p3) => p1 + Math.max(1, +p2 - totalDel) + p3);
+  if (out.indexOf("<mergeCells") >= 0){
+    out = out.replace(/<mergeCells\b[^>]*>([\s\S]*?)<\/mergeCells>/, (block, inner) => {
+      const kept = [];
+      inner.replace(/<mergeCell\b[^>]*?ref="([A-Z]+)(\d+):([A-Z]+)(\d+)"[^>]*?\/>/g, (a, c1, r1, c2, r2) => {
+        let first = -1, cnt = 0;
+        for (let r = +r1; r <= +r2; r++){
+          const nr2 = newNum(r);
+          if (nr2 > 0){ if (first < 0) first = nr2; cnt++; }
+        }
+        if (first > 0 && !(cnt === 1 && c1 === c2)){
+          kept.push('<mergeCell ref="' + c1 + first + ':' + c2 + (first + cnt - 1) + '"/>');
+        }
+        return a;
+      });
+      return kept.length ? '<mergeCells count="' + kept.length + '">' + kept.join("") + '</mergeCells>' : "";
+    });
+  }
+  out = out.replace(/(<autoFilter\b[^>]*?ref="[A-Z]+)(\d+)(:[A-Z]+)(\d+)(")/, (a, p1, r1, p3, r2, p5) => {
+    const nr1 = newNum(+r1);
+    const startR = nr1 > 0 ? nr1 : Math.max(1, +r1 - delBefore[Math.min(+r1, maxR + 1)]);
+    return p1 + startR + p3 + Math.max(startR, +r2 - totalDel) + p5;
+  });
+  out = out.replace(/<hyperlink\b[^>]*?\/>/g, tag => {
+    const rr = /\bref="([A-Z]+)(\d+)"/.exec(tag);
+    if (!rr) return tag;
+    const nr2 = newNum(+rr[2]);
+    if (nr2 < 0) return "";
+    return nr2 === +rr[2] ? tag : tag.replace(/(\bref="[A-Z]+)(\d+)(")/, (a, p1, p2, p3) => p1 + nr2 + p3);
+  });
+  return { xml: out, removed };
+}
+/* добавляем в styles.xml исходника стили для листа «Удалённые»: шапка + рамки */
+function augmentStylesXml(xml){
+  function addItem(tag, itemRe, itemXml){
+    const blockRe = new RegExp("<" + tag + "(\\s[^>]*)?>([\\s\\S]*?)</" + tag + ">");
+    const bm = blockRe.exec(xml);
+    if (!bm) return -1;
+    const count = (bm[2].match(itemRe) || []).length;
+    const newBlock = bm[0].replace("</" + tag + ">", itemXml + "</" + tag + ">")
+      .replace(new RegExp("(<" + tag + "[^>]*count=\")(\\d+)(\")"), (a, p1, p2, p3) => p1 + (count + 1) + p3);
+    xml = xml.replace(bm[0], newBlock);
+    return count;
+  }
+  const fontId = addItem("fonts", /<font[\s>\/]/g, '<font><b/><sz val="11"/><name val="Calibri"/></font>');
+  const fillId = addItem("fills", /<fill[\s>]/g, '<fill><patternFill patternType="solid"><fgColor rgb="FFDDEBF7"/><bgColor indexed="64"/></patternFill></fill>');
+  const borderId = addItem("borders", /<border[\s>]/g, '<border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border>');
+  if (fontId < 0 || fillId < 0 || borderId < 0) return null;
+  const hdrXf = addItem("cellXfs", /<xf[\s>\/]/g, '<xf numFmtId="0" fontId="' + fontId + '" fillId="' + fillId + '" borderId="' + borderId + '" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>');
+  if (hdrXf < 0) return null;
+  const cellXf = addItem("cellXfs", /<xf[\s>\/]/g, '<xf numFmtId="0" fontId="0" fillId="0" borderId="' + borderId + '" xfId="0" applyBorder="1"/>');
+  return { xml, hdrXf, cellXf };
+}
+/* XML нового листа «Удалённые»: шапка, рамки, ширины, автофильтр */
+function buildRemovedSheetXml(remAoa, hdrXf, cellXf){
+  const nCols = remAoa[0].length;
+  let colsXml = "<cols>";
+  for (let c = 0; c < nCols; c++){
+    let w = 8;
+    for (const row of remAoa){
+      const L = String(row[c] == null ? "" : row[c]).length;
+      if (L + 2 > w) w = L + 2;
+    }
+    colsXml += '<col min="' + (c + 1) + '" max="' + (c + 1) + '" width="' + Math.min(w, 50) + '" customWidth="1"/>';
+  }
+  colsXml += "</cols>";
+  let rowsXml = "";
+  for (let i = 0; i < remAoa.length; i++){
+    const row = remAoa[i];
+    const xf = i === 0 ? hdrXf : cellXf;
+    const sAttr = xf >= 0 ? ' s="' + xf + '"' : "";
+    let cells = "";
+    for (let c = 0; c < nCols; c++){
+      const v = row[c];
+      const ref = XLSX.utils.encode_cell({ r: i, c });
+      if (v === "" || v == null){ if (xf >= 0) cells += '<c r="' + ref + '"' + sAttr + '/>'; continue; }
+      if (typeof v === "number" && isFinite(v)) cells += '<c r="' + ref + '"' + sAttr + '><v>' + v + '</v></c>';
+      else cells += '<c r="' + ref + '"' + sAttr + ' t="inlineStr"><is><t xml:space="preserve">' + xmlEsc2(v) + '</t></is></c>';
+    }
+    rowsXml += '<row r="' + (i + 1) + '"' + (i === 0 ? ' ht="26" customHeight="1"' : "") + '>' + cells + '</row>';
+  }
+  const lastCol = XLSX.utils.encode_cell({ r: 0, c: nCols - 1 }).replace(/\d+$/, "");
+  const rangeRef = "A1:" + lastCol + remAoa.length;
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="' + rangeRef + '"/>' + colsXml + '<sheetData>' + rowsXml + '</sheetData><autoFilter ref="' + rangeRef + '"/></worksheet>';
+}
+/* регистрация нового листа в workbook.xml, rels и content-types */
+function addRemovedSheetToZipParts(wbXml, relsXml, ctXml, delName){
+  let maxSheetId = 0;
+  wbXml.replace(/sheetId="(\d+)"/g, (a, n) => { maxSheetId = Math.max(maxSheetId, +n); return a; });
+  let maxRid = 0;
+  relsXml.replace(/Id="rId(\d+)"/g, (a, n) => { maxRid = Math.max(maxRid, +n); return a; });
+  const rid = "rId" + (maxRid + 1);
+  const target = "worksheets/sheetRoboto4kaDel.xml";
+  return {
+    wbXml: wbXml.replace("</sheets>", '<sheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" name="' + xmlEsc2(delName) + '" sheetId="' + (maxSheetId + 1) + '" r:id="' + rid + '"/></sheets>'),
+    relsXml: relsXml.replace("</Relationships>", '<Relationship Id="' + rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="' + target + '"/></Relationships>'),
+    ctXml: ctXml.replace("</Types>", '<Override PartName="/xl/' + target + '" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'),
+    path: "xl/" + target,
+  };
+}
+/* главный путь: правим исходный файл как zip, всё оформление остаётся родным */
+async function buildCleanZip(del, withLog){
+  if (typeof JSZip === "undefined") return null;
+  const f1 = state.f1;
+  const zip = await JSZip.loadAsync(f1.buf.slice(0));
+  const wbFile = zip.file("xl/workbook.xml");
+  const relsFile = zip.file("xl/_rels/workbook.xml.rels");
+  const ctFile = zip.file("[Content_Types].xml");
+  if (!wbFile || !relsFile || !ctFile) return null;
+  let wbXml = await wbFile.async("string");
+  let relsXml = await relsFile.async("string");
+  let ctXml = await ctFile.async("string");
+  const sheetPath = findSheetPath(wbXml, relsXml, f1.sheet);
+  if (!sheetPath || !zip.file(sheetPath)) return null;
+  const tr = transformSheetXml(await zip.file(sheetPath).async("string"), del);
+  if (!tr || !tr.removed) return null;
+  zip.file(sheetPath, tr.xml);
+  if (zip.file("xl/calcChain.xml")){ // Excel пересчитает формулы сам, а устаревшие ссылки вызвали бы «восстановление»
+    zip.remove("xl/calcChain.xml");
+    ctXml = ctXml.replace(/<Override[^>]*?calcChain\.xml[^>]*?\/>/, "");
+    relsXml = relsXml.replace(/<Relationship\b[^>]*?calcChain\.xml[^>]*?\/>/, "");
+  }
+  if (withLog){
+    const remAoa = buildRemovedAoa(del);
+    if (remAoa){
+      let delName = "Удалённые";
+      if (wbXml.indexOf('name="' + delName + '"') >= 0) delName = "Удалённые дубли";
+      const parts = addRemovedSheetToZipParts(wbXml, relsXml, ctXml, delName);
+      wbXml = parts.wbXml; relsXml = parts.relsXml; ctXml = parts.ctXml;
+      let hdrXf = -1, cellXf = -1;
+      const stFile = zip.file("xl/styles.xml");
+      if (stFile){
+        try {
+          const aug = augmentStylesXml(await stFile.async("string"));
+          if (aug){ zip.file("xl/styles.xml", aug.xml); hdrXf = aug.hdrXf; cellXf = aug.cellXf; }
+        } catch (e) { /* не вышло — лист будет без оформления */ }
+      }
+      zip.file(parts.path, buildRemovedSheetXml(remAoa, hdrXf, cellXf));
+    }
+  }
+  zip.file("xl/workbook.xml", wbXml);
+  zip.file("xl/_rels/workbook.xml.rels", relsXml);
+  zip.file("[Content_Types].xml", ctXml);
+  const out = await zip.generateAsync({ type: "arraybuffer", compression: "DEFLATE" });
+  return new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+/* Копия листа без удалённых строк С СОХРАНЕНИЕМ СТИЛЕЙ исходника */
+function buildStyledCleanSheet(del){
+  const f1 = state.f1;
+  const wb2 = XLSX.read(f1.buf, { type: "array", cellStyles: true, cellNF: true });
+  const ws = wb2.Sheets[f1.sheet];
+  if (!ws || !ws["!ref"]) return null;
+  const range = XLSX.utils.decode_range(ws["!ref"]);
+  // карта: старый номер строки -> новый (-1 = удалена)
+  const map = new Array(range.e.r + 1).fill(-1);
+  let nr = 0;
+  for (let r = 0; r <= range.e.r; r++){
+    if (del.has(r + 1)) continue;
+    map[r] = nr++;
+  }
+  if (!nr) return null;
+  const out = {};
+  for (const key in ws){
+    if (key[0] === "!") continue;
+    const cc = XLSX.utils.decode_cell(key);
+    const newR = map[cc.r];
+    if (newR == null || newR < 0) continue;
+    out[XLSX.utils.encode_cell({ r: newR, c: cc.c })] = ws[key]; // ячейка целиком: значение, формат, стиль
+  }
+  out["!ref"] = XLSX.utils.encode_range({ s: { r: 0, c: range.s.c }, e: { r: nr - 1, c: range.e.c } });
+  if (ws["!cols"]) out["!cols"] = ws["!cols"];
+  if (ws["!rows"]){
+    const newRows = [];
+    for (let r = 0; r < ws["!rows"].length; r++){
+      if (map[r] >= 0 && ws["!rows"][r]) newRows[map[r]] = ws["!rows"][r];
+    }
+    out["!rows"] = newRows;
+  }
+  if (ws["!merges"]){
+    const merges = [];
+    for (const m of ws["!merges"]){
+      let firstKept = -1, keptCount = 0;
+      for (let r = m.s.r; r <= m.e.r; r++){
+        if (r < map.length && map[r] >= 0){ if (firstKept < 0) firstKept = map[r]; keptCount++; }
+      }
+      if (firstKept < 0) continue;
+      if (keptCount === 1 && m.s.c === m.e.c) continue;
+      merges.push({ s: { r: firstKept, c: m.s.c }, e: { r: firstKept + keptCount - 1, c: m.e.c } });
+    }
+    if (merges.length) out["!merges"] = merges;
+  }
+  if (ws["!autofilter"] && ws["!autofilter"].ref){
+    const ar = XLSX.utils.decode_range(ws["!autofilter"].ref);
+    const startR = ar.s.r < map.length && map[ar.s.r] >= 0 ? map[ar.s.r] : 0;
+    out["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: startR, c: ar.s.c }, e: { r: Math.max(nr - 1, startR), c: ar.e.c } }) };
+  }
+  return out;
+}
+
+/* Сборка таблицы без дублей: из каждой группы остаётся первое упоминание */
+function buildCleanFile(del, withLog){
+  const f1 = state.f1;
+  const rows = f1.rows;
+  const keptAoa = [];
+  for (let i = 0; i < rows.length; i++){
+    if (!del.has(i + 1)) keptAoa.push(rows[i] || []);
+  }
+  const wb = XLSX.utils.book_new();
+  let ws = null;
+  try { ws = buildStyledCleanSheet(del); } catch (e) { ws = null; } // не вышло со стилями — соберём без них
+  if (!ws){
+    ws = XLSX.utils.aoa_to_sheet(keptAoa.length ? keptAoa : [[""]]);
+    ws["!cols"] = colWidths(keptAoa.length ? keptAoa : [[""]]);
+  }
+  XLSX.utils.book_append_sheet(wb, ws, "Без дублей");
+  const remAoa = withLog ? buildRemovedAoa(del) : null;
+  if (remAoa){
+    const ws2 = XLSX.utils.aoa_to_sheet(remAoa);
+    for (let c = 0; c < remAoa[0].length; c++){
+      const addr = XLSX.utils.encode_cell({ r: 0, c });
+      if (ws2[addr]) ws2[addr].s = { font: { bold: true } };
+    }
+    ws2["!cols"] = colWidths(remAoa);
+    XLSX.utils.book_append_sheet(wb, ws2, "Удалённые");
+  }
+  const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  return { blob: new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), removedCount: del.size };
+}
+
+async function downloadCleanFile(){
+  if (!state.f1 || !state.dupGroups || !state.dupGroups.length) return;
+  const withLog = !!document.getElementById("dupDelLog")?.checked;
+  const delPhone = !!document.getElementById("dupDelPhone")?.checked;
+  const del = computeDupDeletions(delPhone);
+  if (!del.size){
+    alert("Нечего удалять: все найденные группы — совпадения только по телефону. Поставьте вторую галочку, если их тоже нужно удалить.");
+    return;
+  }
+  const note = document.getElementById("cleanNote");
+  if (note) note.textContent = "Готовлю файл…";
+  let blob = null;
+  let mode = "оформление исходника сохранено полностью";
+  try { blob = await buildCleanZip(del, withLog); } catch (e){ blob = null; }
+  if (!blob){
+    mode = "упрощённое оформление";
+    blob = buildCleanFile(del, withLog).blob;
+  }
+  const base = state.f1.name.replace(/\.[^.]+$/, "");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = base + "_БЕЗ_ДУБЛЕЙ.xlsx";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  if (note) note.textContent = "Удалено строк: " + del.size + " (" + mode + "). Файл скачан.";
+}
+
+function showDupesResults(total, dupGroups){
+  const dupRows = dupGroups.reduce((s, g) => s + g.length, 0);
+  const stats = document.getElementById("stats");
+  stats.innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="lbl">всего строк</div></div>
+    <div class="stat orange"><div class="num">${dupGroups.length}</div><div class="lbl">групп дублей</div></div>
+    <div class="stat red"><div class="num">${dupRows}</div><div class="lbl">строк в дублях</div></div>`;
+  const box = document.getElementById("disputedBox");
+  if (dupGroups.length){
+    let h = `<p class="hint" style="margin-top:12px">Найденные дубли${dupGroups.length > 20 ? " (показаны первые 20 групп, полный список — в файле)" : ""}:</p>
+      <div class="previewbox"><table class="preview"><tr><th>Группа</th><th>Строка</th><th>ФИО</th><th>Телефон</th><th>Совпадение</th></tr>`;
+    let g = 1;
+    for (const grp of dupGroups.slice(0, 20)){
+      for (const m of grp){
+        h += `<tr><td class="rownum">${g}</td><td class="rownum">${m.excelRow}</td><td>${esc(m.fio || "")}</td><td>${esc(String(m.phone ?? ""))}</td><td>${esc(m.type)}</td></tr>`;
+      }
+      g++;
+    }
+    h += `</table></div>
+      <div style="margin-top:14px;padding:12px 14px;border:1px solid #d8d8e4;border-radius:10px;background:#fafaff">
+        <label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;cursor:pointer">
+          <input type="checkbox" id="dupDelLog" checked>
+          Вывести удалённых списком на отдельном листе «Удалённые»
+        </label>
+        <label style="display:flex;gap:8px;align-items:center;margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="dupDelPhone">
+          Удалять и совпавших только по телефону (осторожно: это могут быть разные люди с общим номером)
+        </label>
+        <button class="dlbtn" id="cleanBtn" onclick="downloadCleanFile()" style="width:100%">🧹 Скачать таблицу без дублей</button>
+        <p class="hint" id="cleanNote" style="margin:8px 0 0">Из каждой группы остаётся первая строка («первое упоминание»), остальные удаляются.</p>
+      </div>`;
+    box.innerHTML = h;
+  } else {
+    box.innerHTML = `<p class="hint" style="margin-top:12px">🎉 Дублей не найдено — список чистый.</p>`;
+  }
+  document.getElementById("resultCard").classList.remove("hidden");
+  document.getElementById("resultCard").scrollIntoView({ behavior:"smooth", block:"nearest" });
+}
+
+/* --- Итоги --- */
+function showResults(counts, disputed){
+  const stats = document.getElementById("stats");
+  const foundTotal = counts.exact + counts.typo + counts.namechange + counts.phone;
+  const total = foundTotal + counts.disputed + counts.notfound;
+  stats.innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="lbl">всего строк</div></div>
+    <div class="stat green"><div class="num">${foundTotal}</div><div class="lbl">найдены</div></div>
+    <div class="stat green"><div class="num">${counts.typo + counts.namechange}</div><div class="lbl">из них с опечаткой / сменой фамилии</div></div>
+    <div class="stat orange"><div class="num">${counts.disputed}</div><div class="lbl">спорные</div></div>
+    <div class="stat red"><div class="num">${counts.notfound}</div><div class="lbl">не найдены</div></div>`;
+  const box = document.getElementById("disputedBox");
+  if (disputed.length){
+    let h = `<p class="hint" style="margin-top:12px">⚠ Спорные случаи — телефон совпал, но ФИО сильно отличается (возможно смена фамилии). Проверьте вручную${disputed.length > 50 ? " (показаны первые 50)" : ""}:</p>
+      <div class="previewbox"><table class="preview"><tr><th>Строка</th><th>ФИО в файле 1</th><th>Телефон</th><th>ФИО в базе</th><th>Сходство</th></tr>`;
+    for (const d of disputed.slice(0, 50)){
+      h += `<tr><td class="rownum">${d.row}</td><td>${esc(d.fio || "")}</td><td>${esc(String(d.phone ?? ""))}</td><td>${esc(d.dbName || "")}</td><td>${Math.round((d.sim || 0) * 100)}%</td></tr>`;
+    }
+    h += "</table></div>";
+    box.innerHTML = h;
+  } else box.innerHTML = "";
+  document.getElementById("resultCard").classList.remove("hidden");
+  document.getElementById("resultCard").scrollIntoView({ behavior:"smooth", block:"nearest" });
+}
+
+document.getElementById("dlBtn").onclick = () => {
+  if (!state.resultBlob) return;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(state.resultBlob);
+  a.download = state.resultName;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+};
+</script>
+</body>
+</html>

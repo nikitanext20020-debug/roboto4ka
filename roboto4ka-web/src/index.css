@@ -1,0 +1,286 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background: #040618;
+  color: #ffffff;
+  font-family: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+}
+
+::selection {
+  background: rgba(167, 139, 250, 0.45);
+  color: #fff;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.25);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(167, 139, 250, 0.55); }
+
+@layer components {
+  .glass {
+    background: rgba(17, 18, 45, 0.45);
+    border: 1px solid rgba(167, 139, 250, 0.18);
+    backdrop-filter: blur(22px) saturate(1.2);
+    -webkit-backdrop-filter: blur(22px) saturate(1.2);
+    box-shadow:
+      0 8px 32px rgba(2, 4, 26, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .glass-strong {
+    background: rgba(20, 22, 55, 0.6);
+    border: 1px solid rgba(167, 139, 250, 0.22);
+    backdrop-filter: blur(28px) saturate(1.25);
+    -webkit-backdrop-filter: blur(28px) saturate(1.25);
+    box-shadow:
+      0 20px 60px rgba(2, 4, 26, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .text-gradient-violet {
+    background: linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #c4b5fd 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .card-glow-blue {
+    box-shadow:
+      0 0 0 1px rgba(96, 165, 250, 0.12),
+      0 25px 60px -25px rgba(59, 130, 246, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .card-glow-indigo {
+    box-shadow:
+      0 0 0 1px rgba(129, 140, 248, 0.14),
+      0 25px 60px -25px rgba(99, 102, 241, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .card-glow-violet {
+    box-shadow:
+      0 0 0 1px rgba(167, 139, 250, 0.16),
+      0 25px 60px -25px rgba(139, 92, 246, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .tool-tile {
+    background: rgba(20, 22, 55, 0.4);
+    border: 1px solid rgba(167, 139, 250, 0.1);
+    transition: all 0.2s ease;
+  }
+  .tool-tile:hover {
+    background: rgba(30, 32, 75, 0.55);
+    border-color: rgba(167, 139, 250, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.45);
+  }
+}
+
+/* ============================================================
+   LIGHT THEME — Linear / Notion / Vercel style
+   Solid colors, real shadows, no violet borders, no opacity mess
+   ============================================================ */
+
+html.light-theme {
+  --lt-bg: #f6f8fc;
+  --lt-sidebar: #ffffff;
+  --lt-card: #ffffff;
+  --lt-text: #0f172a;
+  --lt-text-secondary: #475569;
+  --lt-text-muted: #94a3b8;
+  --lt-border: rgba(15, 23, 42, 0.06);
+  --lt-primary: #7c3aed;
+  --lt-primary-hover: #6d28d9;
+  --lt-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06);
+  --lt-shadow-sm: 0 1px 2px rgba(15,23,42,0.04), 0 2px 8px rgba(15,23,42,0.03);
+}
+
+html.light-theme,
+html.light-theme body,
+html.light-theme #root {
+  background: var(--lt-bg) !important;
+  color: var(--lt-text) !important;
+}
+
+/* Kill dark ambient blobs */
+html.light-theme [class*="fixed"][class*="-z-10"] { display: none !important; }
+
+/* Sidebar */
+html.light-theme aside {
+  background: var(--lt-sidebar) !important;
+  border-right: 1px solid var(--lt-border) !important;
+  backdrop-filter: none !important;
+}
+html.light-theme aside h1,
+html.light-theme aside p,
+html.light-theme aside span,
+html.light-theme aside button { color: var(--lt-text-secondary) !important; }
+html.light-theme aside button:hover { color: var(--lt-text) !important; }
+html.light-theme aside button[class*="from-violet"],
+html.light-theme aside button[class*="bg-gradient"] {
+  color: #ffffff !important;
+}
+
+/* Glass → solid white card */
+html.light-theme .glass,
+html.light-theme .glass-strong,
+html.light-theme [class*="rounded-3xl"][class*="glass"],
+html.light-theme [class*="rounded-2xl"][class*="glass"] {
+  background: var(--lt-card) !important;
+  border: 1px solid var(--lt-border) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: var(--lt-shadow) !important;
+}
+
+/* Text colors */
+html.light-theme .text-white { color: var(--lt-text) !important; }
+html.light-theme [class*="text-violet-100"],
+html.light-theme [class*="text-violet-200"],
+html.light-theme [class*="text-violet-300"] { color: var(--lt-text-secondary) !important; }
+html.light-theme [class*="text-violet-200/4"],
+html.light-theme [class*="text-violet-200/5"],
+html.light-theme [class*="text-violet-200/6"],
+html.light-theme [class*="text-violet-200/7"],
+html.light-theme [class*="text-violet-100/6"],
+html.light-theme [class*="text-violet-100/7"],
+html.light-theme [class*="text-violet-100/8"] { color: var(--lt-text-muted) !important; }
+
+/* Gradient text → solid purple */
+html.light-theme .text-gradient-violet {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: var(--lt-primary) !important;
+  -webkit-text-fill-color: var(--lt-primary) !important;
+}
+
+/* Inputs */
+html.light-theme input,
+html.light-theme textarea,
+html.light-theme select {
+  background: #f8fafc !important;
+  border: 1px solid var(--lt-border) !important;
+  color: var(--lt-text) !important;
+  box-shadow: var(--lt-shadow-sm) !important;
+}
+html.light-theme input:focus,
+html.light-theme textarea:focus,
+html.light-theme select:focus {
+  border-color: var(--lt-primary) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.08) !important;
+}
+html.light-theme input::placeholder,
+html.light-theme textarea::placeholder { color: var(--lt-text-muted) !important; }
+
+/* Primary buttons stay purple */
+html.light-theme button[class*="from-violet-600"],
+html.light-theme button[class*="from-indigo-600"],
+html.light-theme button[class*="from-fuchsia-600"],
+html.light-theme button[class*="from-emerald-5"],
+html.light-theme button[class*="from-cyan-6"],
+html.light-theme button[class*="from-amber-6"] {
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2) !important;
+}
+
+/* Ghost buttons */
+html.light-theme button[class*="glass"] {
+  background: var(--lt-card) !important;
+  border: 1px solid var(--lt-border) !important;
+  color: var(--lt-text-secondary) !important;
+  box-shadow: var(--lt-shadow-sm) !important;
+}
+html.light-theme button[class*="glass"]:hover {
+  border-color: rgba(124, 58, 237, 0.3) !important;
+  color: var(--lt-text) !important;
+}
+
+/* Tables */
+html.light-theme table { color: var(--lt-text) !important; }
+html.light-theme thead { background: #f8fafc !important; }
+html.light-theme th {
+  color: var(--lt-text-muted) !important;
+  border-color: var(--lt-border) !important;
+  background: #f8fafc !important;
+}
+html.light-theme td { border-color: var(--lt-border) !important; }
+html.light-theme tr:hover { background: #f8fafc !important; }
+
+/* Tool tiles */
+html.light-theme .tool-tile {
+  background: var(--lt-card) !important;
+  border: 1px solid var(--lt-border) !important;
+  box-shadow: var(--lt-shadow-sm) !important;
+}
+html.light-theme .tool-tile:hover {
+  background: #f0f4ff !important;
+  border-color: rgba(124, 58, 237, 0.2) !important;
+  box-shadow: var(--lt-shadow) !important;
+  transform: translateY(-2px);
+}
+
+/* Feature card glows → clean shadows */
+html.light-theme [class*="card-glow"] {
+  box-shadow: var(--lt-shadow) !important;
+}
+html.light-theme [class*="card-glow"]:hover {
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.1), 0 12px 40px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Dark backgrounds in cards → white */
+html.light-theme [class*="bg-\\[\\#0a0c20\\]"],
+html.light-theme [class*="bg-\\[#0a0c20\\]"] {
+  background: #f8fafc !important;
+}
+
+/* Scrollbars */
+html.light-theme ::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.12); }
+html.light-theme ::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.25); }
+
+/* Selection */
+html.light-theme ::selection {
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--lt-text);
+}
+
+/* Status bar */
+html.light-theme [class*="border-violet-500/15"],
+html.light-theme [class*="border-violet-400/1"],
+html.light-theme [class*="border-violet-400/2"] {
+  border-color: var(--lt-border) !important;
+}
+
+/* Profile card in sidebar */
+html.light-theme [class*="ring-violet"] {
+  --tw-ring-color: rgba(124, 58, 237, 0.2) !important;
+}
+
+/* Loading overlay */
+html.light-theme [class*="bg-\\[#040618\\]"] {
+  background: rgba(248, 250, 252, 0.8) !important;
+}
+
+/* Quote в светлой теме */
+html.light-theme [class*="text-violet-50"],
+html.light-theme [class*="text-violet-50/90"] {
+  color: var(--lt-text) !important;
+}
+html.light-theme [class*="text-violet-200/50"],
+html.light-theme [class*="tracking-\\[0\\.2em\\]"] {
+  color: var(--lt-text-muted) !important;
+}

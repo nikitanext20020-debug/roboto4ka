@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+release/
+*.tsbuildinfo
+*.local
+.vite
+.DS_Store
+
+# Секреты — никогда не должны уходить в репозиторий
+src/lib/secrets.ts
+
